@@ -86,7 +86,7 @@ Client.prototype.build = function build(callback) {
 
   process.nextTick(function () {
     callback(null, that);
-  });  
+  });
 };
 
 
@@ -102,18 +102,13 @@ Client.prototype.exportFile = function exportFile(tunnelUrl, callback) {
 
   this.cacheExists(function (err, cacheExists) {
     if (cacheExists) {
-      debug('Cache exists. Overwriting mainHtml with cacheHtml.');
-      return that.copyCacheToMain(callback);
+      debug('Cache exists.');
+      return callback(err, that);
     }
 
     that._export(that._cacheHtmlPath, null, function (err) {
-      if (err) {
-        return callback(err, that);
-      }
-
-      // we exported to cache, now copy to main
-      debug('Cache replenished. Overwriting mainHtml with cacheHtml.');
-      that.copyCacheToMain(callback);
+      debug('Cache replenished.');
+      return callback(err, that);
     });
   });
 };
@@ -126,7 +121,7 @@ Client.prototype.cacheExists = function (callback) {
 };
 
 
-Client.prototype.copyCacheToMain = function (callback) {
+Client.prototype._copyCacheToMain = function (callback) {
   callback = this._callbackOnce(callback);
 
   var rd = fs.createReadStream(this._cacheHtmlPath);

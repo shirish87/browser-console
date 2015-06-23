@@ -9,10 +9,14 @@ var debug = require('diagnostics')('bc:server');
 var Primus = require('primus');
 var PrimusResponder = require('primus-responder');
 
-var serve = serveStatic('public', { 'index': [ 'index.html' ] });
-
 
 module.exports.start = function start(config, replStream, callback) {
+  var useCache = !!(config.client && config.client.useCache);
+
+  var indexFile = (useCache ? 'cache.html' : 'index.html');
+  debug('Using indexFile: %s', indexFile);
+
+  var serve = serveStatic('public', { 'index': [ indexFile ] });
 
   var server = http.createServer(function (req, res) {
     serve(req, res, finalhandler(req, res));
