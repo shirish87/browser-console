@@ -27,7 +27,7 @@ config.websocket = {
 };
 
 config.browserstack = {
-  hub: 'http://127.0.0.1:4444/wd/hub',
+  hub: 'http://hub.browserstack.com/wd/hub',
   user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_KEY
 };
@@ -198,8 +198,8 @@ function initWebDriver(config, caps) {
 
   var wd = new webdriver.Builder()
     .usingServer(config.browserstack.hub)
-  	.withCapabilities(capabilities)
-  	.build();
+    .withCapabilities(capabilities)
+    .build();
 
   return wd;
 }
