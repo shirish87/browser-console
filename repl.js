@@ -8,6 +8,8 @@ var isAnsiReadlineOK = 'stripVTControlCharacters' in require('readline');
 
 module.exports.start = function start(config) {
   return _(function (push, next) {
+    console.log('Loading…');
+
     var r = repl.start({
       prompt: isAnsiReadlineOK ? '\u001b[96m › \u001b[39m' : ' › ',
       eval: function (cmd, ctx, file, fn) {

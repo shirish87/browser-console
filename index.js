@@ -124,7 +124,6 @@ function boot(config, options) {
       .parallel(2)
       .toArray(function (res) {
         debug('Tunnel and client ready');
-        console.log('Ready.');
 
         var url = res.shift();
         client.export(url, function (err) {
@@ -151,6 +150,7 @@ function boot(config, options) {
             var checkTitle = webdriver.until.titleIs(options.clientPageTitle);
             wd.wait(checkTitle, config.openTimeout).then(function () {
               debug('Opened URL: %s', url);
+              console.log('Ready.\n');
             }).then(null, function (err) {
               debug('Failed to open URL', err);
               terminate(1);
