@@ -23,8 +23,5 @@
     "to-array": "^0.1.4",
     "uglify-js": "^2.4.23",
     "util-inspect": "^0.1.8"
-  },
-  "devDependencies": {
-    "browserify": "^10.2.4"
   }
 }
