@@ -98,7 +98,7 @@ function boot(config, options) {
           }
 
           if (wd) {
-            startWdSession(config, wd, url);
+            startWdSession(config, wd, url, terminate);
           }
         });
       });
