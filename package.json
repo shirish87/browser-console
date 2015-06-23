@@ -5,6 +5,9 @@
   "main": "index.js",
   "author": "Shirish Kamath",
   "license": "MIT",
+  "scripts": {
+    "build-client": "browserify client-util.js > public/util.js"
+  },
   "dependencies": {
     "array-map": "0.0.0",
     "diagnostics": "^1.0.1",

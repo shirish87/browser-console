@@ -18,7 +18,13 @@ module.exports.start = function start(config, replStream, callback) {
     serve(req, res, finalhandler(req, res));
   });
 
-  var primus = new Primus(server, { transformer: config.websocket.engine });
+  var engine = (
+    config &&
+    config.websocket &&
+    typeof config.websocket.engine === 'string'
+    ) ? config.websocket.engine : 'websockets';
+
+  var primus = new Primus(server, { transformer: engine });
   primus.use('responder', PrimusResponder);
 
   var dataStream = createDataStream(primus, replStream);

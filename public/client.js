@@ -1,13 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>browser-console</title>
-</head>
-<body>
-<script src="./client.js"></script>
-<script src="./util.js"></script>
-<script src="./dynamic.js"></script>
-<script>
 // Uses concepts and code from:
 // https://github.com/Automattic/browser-repl/blob/1b7adf204583efeb165726164d3d22d6b25c277b/client.js
 
@@ -66,7 +56,3 @@ window.onerror = function (message, url, linenumber){
     }
   });
 };
-
-</script>
-</body>
-</html>
