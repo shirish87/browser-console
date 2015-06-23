@@ -43,7 +43,7 @@ primus.on('error', function error(err) {
   document.body.innerHTML = '<h1>Error: ' + err + '</h1>';
 });
 
-primus.on('end', function open() {
+primus.on('end', function end() {
   document.body.innerHTML = '<h1>Disconnected.</h1>';
 });
 
