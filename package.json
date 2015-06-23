@@ -1,0 +1,29 @@
+{
+  "name": "browser-console",
+  "version": "1.0.0",
+  "description": "Executes code in a remote browser console.",
+  "main": "index.js",
+  "author": "Shirish Kamath",
+  "license": "MIT",
+  "dependencies": {
+    "array-map": "0.0.0",
+    "async": "^1.2.1",
+    "cli-input": "^0.1.11",
+    "diagnostics": "^1.0.1",
+    "engine.io": "^1.5.1",
+    "finalhandler": "^0.4.0",
+    "foreach": "^2.0.5",
+    "highland": "^2.5.1",
+    "ngrok": "^0.1.99",
+    "primus": "^3.1.1",
+    "primus-responder": "^1.0.3",
+    "selenium-webdriver": "^2.46.1",
+    "serve-static": "^1.10.0",
+    "to-array": "^0.1.4",
+    "uglify-js": "^2.4.23",
+    "util-inspect": "^0.1.8"
+  },
+  "devDependencies": {
+    "browserify": "^10.2.4"
+  }
+}
