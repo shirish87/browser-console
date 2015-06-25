@@ -408,7 +408,9 @@ function getBrowserId(b) {
     sig = [ 'browser', 'browser_version', 'os', 'os_version' ];
   }
 
-  return getBrowserHashKey(sig.map(function (k) { return b[k]; }));
+  return getBrowserHashKey(sig
+    .map(function (k) { return b[k]; })
+    .filter(function (b) { return !!b; }));
 }
 
 
