@@ -80,7 +80,7 @@ Client.prototype.build = function build(callback) {
       push(null, _.nil);
     }))
     .concat(_(readFile(this.getFilePath(this._clientJs))))
-    .reduce1(function (a, b) { return a + b; })
+    .reduce1(function (a, b) { return a.concat(b); })
     .flatMap(this.uglifyStream)
     .map(function (js) {
       var head = that.config.pageTitle ?
