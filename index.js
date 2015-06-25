@@ -13,7 +13,6 @@ var PrimusClient = require('./client');
 
 // TODO: Accept and parse command-line args
 var options = {
-  clientPageTitle: 'browser-console',
   capabilities: {
     browser: 'chrome',
     browserVersion: '36.0',
@@ -29,6 +28,7 @@ config.websocket = {
 };
 
 config.client = {
+  pageTitle: 'browser-console',
   useCache: true,
   path: 'public',
   mainHtml: 'index.html',
@@ -213,7 +213,7 @@ function startWdSession(config, wd, url, terminate) {
     }, config.keepAliveInterval);
   }
 
-  var checkTitle = webdriver.until.titleIs(options.clientPageTitle);
+  var checkTitle = webdriver.until.titleIs(config.client.pageTitle);
   wd.wait(checkTitle, config.openTimeout).then(function () {
     debug('Opened URL: %s', url);
     repl.print('Ready', true);

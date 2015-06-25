@@ -7,11 +7,13 @@ var _ = require('highland');
 var debug = require('diagnostics')('bc:client');
 
 
+var pageTitle = 'browser-console';
+
 var pageHeader = [
   '<!DOCTYPE html>',
   '<html>',
   '<head>',
-  '  <title>browser-console</title>',
+  '  <title>' + pageTitle + '</title>',
   '</head>',
   '<body>',
   '<script>'
@@ -78,10 +80,13 @@ Client.prototype.build = function build(callback) {
       push(null, _.nil);
     }))
     .concat(_(readFile(this.getFilePath(this._clientJs))))
-    .reduce1(function (a, b) { return a.concat(b); })
+    .reduce1(function (a, b) { return a + b; })
     .flatMap(this.uglifyStream)
     .map(function (js) {
-      return pageHeader + js + pageFooter;
+      var head = that.config.pageTitle ?
+        pageHeader.replace(pageTitle, that.config.pageTitle) : pageHeader;
+
+      return head + js + pageFooter;
     });
 
   process.nextTick(function () {
