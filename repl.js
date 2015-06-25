@@ -13,10 +13,7 @@ var isPromptSet = false;
 
 
 module.exports.print = function (msg, withPrompt) {
-  if (replServer) {
-    replServer.clearLine(process.stdout, 0);
-  }
-
+  rl.clearLine(process.stdout, 0);
   console.log(msg || '');
 
   if (withPrompt) {
