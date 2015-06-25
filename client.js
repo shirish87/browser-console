@@ -162,10 +162,12 @@ Client.prototype._export = function _export(path, tunnelUrl, callback) {
 
   var that = this;
   var callbackOnce = this._callbackOnce(function (err, client) {
-    try {
-      fs.unlinkSync(path);
-    } catch (e) {
-      // best-effort cleanup :P
+    if (err) {
+      try {
+        fs.unlinkSync(path);
+      } catch (e) {
+        // best-effort cleanup :P
+      }
     }
 
     callback(err, client);
