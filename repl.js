@@ -23,11 +23,13 @@ module.exports.print = function (msg, withPrompt) {
 
 module.exports.showPrompt = function () {
   if (replServer) {
-    if (!isPromptSet && replServer.setPrompt) {
+    if (!isPromptSet && typeof replServer.setPrompt === 'function') {
       replServer.setPrompt(promptText);
     }
 
-    replServer.prompt();
+    if (typeof replServer.prompt === 'function') {
+      replServer.prompt();
+    }
   }
 };
 
