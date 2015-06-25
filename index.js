@@ -135,7 +135,7 @@ config.keepAliveInterval = 30000;
         };
       }
 
-      boot(config, {
+      return boot(config, {
         id: getBrowserId(caps),
         capabilities: caps
       });
