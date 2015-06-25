@@ -38,6 +38,9 @@ config.browserstack = {
   getCapabilities: function (caps) {
     // TODO: Needs to be as per -
     // https://www.browserstack.com/automate/capabilities
+    var user = this.user;
+    var key = this.key;
+
     var attrs = [
       'browser',
       'os',
@@ -57,7 +60,10 @@ config.browserstack = {
       }
 
       return o;
-    }, {});
+    }, {
+      'browserstack.user': user,
+      'browserstack.key': key
+    });
   },
 
   update: {
@@ -248,10 +254,8 @@ function initWebDriver(serviceConfig, caps) {
   // Selenium requires 'browserName'
   capabilities.browserName = capabilities.browser;
 
-  capabilities['browserstack.user'] = serviceConfig.user;
-  capabilities['browserstack.key'] = serviceConfig.key;
-
   var wd = new webdriver.Builder()
+    .forBrowser(capabilities.browser)
     .usingServer(serviceConfig.hub)
     .withCapabilities(capabilities)
     .build();
