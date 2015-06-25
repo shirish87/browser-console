@@ -5,24 +5,41 @@
   "main": "index.js",
   "author": "Shirish Kamath",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/shirish87/browser-console.git"
+  },
+  "preferGlobal": "true",
   "scripts": {
     "build-client": "browserify client-util.js > public/util.js"
   },
+  "bin": {
+    "browser-console": "./index.js",
+    "bstack": "./index.js"
+  },
+  "keywords": [
+    "cli",
+    "console",
+    "repl",
+    "remote",
+    "browser",
+    "test"
+  ],
   "dependencies": {
     "array-map": "0.0.0",
-    "diagnostics": "^1.0.1",
-    "engine.io": "^1.5.1",
-    "finalhandler": "^0.4.0",
-    "foreach": "^2.0.5",
-    "highland": "^2.5.1",
-    "ngrok": "^0.1.99",
-    "primus": "^3.1.1",
-    "primus-responder": "^1.0.3",
-    "selenium-webdriver": "^2.41.0",
-    "serve-static": "^1.10.0",
-    "to-array": "^0.1.4",
-    "uglify-js": "^2.4.23",
-    "util-inspect": "^0.1.8",
-    "yargs": "^3.12.0"
+    "diagnostics": "1.0.1",
+    "engine.io": "1.5.1",
+    "finalhandler": "0.4.0",
+    "foreach": "2.0.5",
+    "highland": "2.5.1",
+    "ngrok": "0.1.99",
+    "primus": "3.1.1",
+    "primus-responder": "1.0.3",
+    "selenium-webdriver": "2.41.0",
+    "serve-static": "1.10.0",
+    "to-array": "0.1.4",
+    "uglify-js": "2.4.23",
+    "util-inspect": "0.1.8",
+    "yargs": "3.12.0"
   }
 }
