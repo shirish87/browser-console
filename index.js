@@ -209,7 +209,7 @@ function boot(config, options) {
       })
       .apply(function (url, client) {
         debug('Tunnel and client ready');
-        repl.print('… Exporting client …');
+        // repl.print('… Exporting client …');
 
         client.exportFile(url, function (err) {
           if (err) {
@@ -284,7 +284,7 @@ function startWdSession(config, wd, url, terminate) {
 
   debug('Opening URL: %s', url);
   wd.get(url);
-  repl.print('… Waiting for web page to load …');
+  repl.print('… Waiting for client connection …');
 
   wd.wait(function() {
       return wd.getTitle().then(function (title) {
@@ -298,6 +298,8 @@ function startWdSession(config, wd, url, terminate) {
     }, config.openTimeout)
     .then(null, function (err) {
       debug('Failed to open URL', err);
+      repl.print('Failed to open URL: ' + err);
+
       terminate(1);
     });
 
