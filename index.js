@@ -255,7 +255,6 @@ function initWebDriver(serviceConfig, caps) {
   capabilities.browserName = capabilities.browser;
 
   var wd = new webdriver.Builder()
-    .forBrowser(capabilities.browser)
     .usingServer(serviceConfig.hub)
     .withCapabilities(capabilities)
     .build();
@@ -271,6 +270,21 @@ function startWdSession(config, wd, url, terminate) {
   wd.get(url);
   repl.print('… Waiting for web page to load …');
 
+  wd.wait(function() {
+      return wd.getTitle().then(function (title) {
+        var isClient = (title === config.client.pageTitle);
+        if (isClient) {
+          repl.print('… Ready', true);
+        }
+
+        return isClient;
+      });
+    }, config.openTimeout)
+    .then(null, function (err) {
+      debug('Failed to open URL', err);
+      terminate(1);
+    });
+
   if (config.keepAliveInterval && config.keepAliveInterval > 0) {
     // repl.print('… Setting up session keep-alive …');
 
@@ -283,16 +297,6 @@ function startWdSession(config, wd, url, terminate) {
       });
     }, config.keepAliveInterval);
   }
-
-  var checkTitle = webdriver.until.titleIs(config.client.pageTitle);
-
-  wd.wait(checkTitle, config.openTimeout).then(function () {
-    debug('Opened URL: %s', url);
-    repl.print('… Ready', true);
-  }).then(null, function (err) {
-    debug('Failed to open URL', err);
-    terminate(1);
-  });
 }
 
 
