@@ -83,8 +83,8 @@ Client.prototype.build = function build(callback) {
     .reduce1(function (a, b) { return a.concat(b); })
     .flatMap(this.uglifyStream)
     .map(function (js) {
-      var head = that.config.pageTitle ?
-        pageHeader.replace(pageTitle, that.config.pageTitle) : pageHeader;
+      var head = that._config.pageTitle ?
+        pageHeader.replace(pageTitle, that._config.pageTitle) : pageHeader;
 
       return head + js + pageFooter;
     });
@@ -112,7 +112,10 @@ Client.prototype.exportFile = function exportFile(tunnelUrl, callback) {
     }
 
     that._export(that._cacheHtmlPath, null, function (err) {
-      debug('Cache replenished.');
+      if (!err) {
+        debug('Cache replenished.');
+      }
+
       return callback(err, that);
     });
   });
@@ -158,7 +161,15 @@ Client.prototype._export = function _export(path, tunnelUrl, callback) {
   }
 
   var that = this;
-  var callbackOnce = this._callbackOnce(callback);
+  var callbackOnce = this._callbackOnce(function (err, client) {
+    try {
+      fs.unlinkSync(path);
+    } catch (e) {
+      // best-effort cleanup :P
+    }
+
+    callback(err, client);
+  });
 
   var destStream = fs.createWriteStream(path);
   destStream.on('error', function (err) {
@@ -171,7 +182,6 @@ Client.prototype._export = function _export(path, tunnelUrl, callback) {
 
   this._clientStream
     .errors(function (err, push) {
-      push(null, {}); // pass err to cb, suppress errors in the stream
       callbackOnce(err);
     })
     .pipe(destStream)
