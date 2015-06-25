@@ -2,17 +2,51 @@
 
 var repl = require('repl');
 var _ = require('highland');
+var rl = require('readline');
 
-var isAnsiReadlineOK = 'stripVTControlCharacters' in require('readline');
 
+var isAnsiReadlineOK = 'stripVTControlCharacters' in rl;
+var promptText = isAnsiReadlineOK ? '\x1b[96m › \x1b[39m' : ' › ';
+
+var replServer;
+var isPromptSet = false;
+
+
+module.exports.print = function (msg, withCursor) {
+  if (replServer) {
+    replServer.clearLine(process.stdout, 0);
+  }
+
+  console.log(msg || '');
+
+  if (withCursor) {
+    this.showPrompt();
+  }
+};
+
+module.exports.showPrompt = function () {
+  if (replServer) {
+    if (!isPromptSet) {
+      replServer.setPrompt(promptText);
+    }
+
+    replServer.prompt();
+  }
+};
 
 module.exports.start = function start(config) {
-  return _(function (push, next) {
-    console.log('Loading…');
+  var that = this;
 
-    var r = repl.start({
-      prompt: isAnsiReadlineOK ? '\u001b[96m › \u001b[39m' : ' › ',
+  return _(function (push, next) {
+
+    replServer = repl.start({
+      prompt: '',
       eval: function (cmd, ctx, file, fn) {
+        var hasData = (cmd && !!cmd.trim());
+        if (!hasData) {
+          return that.showPrompt();
+        }
+
         // the REPL doesn't go back to 'prompt mode' until `fn` is called, so we
         // keep it around as `print` for the response from the client to use.
 
@@ -26,13 +60,14 @@ module.exports.start = function start(config) {
       }
     });
 
-    r.on('exit', function () {
-      push(null, _.nil);
+    replServer.on('exit', function () {
+      try {
+        push(null, _.nil);
+      } catch (e) {
+        // consumers may have already been destroyed
+      }
     });
 
-  })
-  .filter(function (inp) {
-    return inp && !!inp.data && !!inp.data.trim();
   });
 };
 

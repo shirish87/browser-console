@@ -3,6 +3,8 @@
 var _ = require('highland');
 var webdriver = require('selenium-webdriver');
 var ngrok = require('ngrok');
+var https = require('https');
+var fs = require('fs');
 var debug = require('diagnostics')('bc:main');
 
 var repl = require('./repl');
@@ -38,7 +40,17 @@ config.client = {
 config.browserstack = {
   hub: 'http://hub.browserstack.com/wd/hub',
   user: process.env.BROWSERSTACK_USERNAME,
-  key: process.env.BROWSERSTACK_KEY
+  key: process.env.BROWSERSTACK_KEY,
+
+  update: {
+    browserJson: 'browsers.json',
+    endpoint: {
+      hostname: 'www.browserstack.com',
+      port: '443',
+      method : 'GET',
+      path: '/automate/browsers.json'
+    }
+  }
 };
 
 config.port = 8080;
@@ -49,7 +61,17 @@ boot(config, options);
 
 
 function boot(config, options) {
+  repl.print('Please wait…');
+
+  var browsers = [];
+  getOrFetchBrowsers(config, function (err, bs) {
+    if (Array.isArray(bs) && bs.length) {
+      browsers = bs;
+    }
+  });
+
   var replStream = repl.start(config);
+  // repl.hideCursor();
 
   server.start(config, replStream, function (err, primus, dataStream) {
     if (err) { throw err; }
@@ -194,7 +216,7 @@ function startWdSession(config, wd, url, terminate) {
   var checkTitle = webdriver.until.titleIs(options.clientPageTitle);
   wd.wait(checkTitle, config.openTimeout).then(function () {
     debug('Opened URL: %s', url);
-    console.log('Ready.\n');
+    repl.print('Ready', true);
   }).then(null, function (err) {
     debug('Failed to open URL', err);
     terminate(1);
@@ -247,4 +269,84 @@ function terminateFn(wd, streams) {
       });
     }
   };
+}
+
+
+function getOrFetchBrowsers(config, callback) {
+  var browserJsonPath = config.browserstack.update.browserJson;
+
+  fs.stat(browserJsonPath, function (err, stat) {
+    // TODO: Get files last-modified time and update periodically
+    var browserJsonExists = (stat && stat.isFile());
+
+    var browsers = browserJsonExists ? require('./' + browserJsonPath) : [];
+
+    if (!Array.isArray(browsers) || !browsers.length) {
+      debug('Fetching', browserJsonPath);
+      return fetchAutomateBrowsers(config, callback);
+    }
+
+    debug('Reusing', browserJsonPath);
+    callback(null, browsers);
+  });
+}
+
+
+function fetchAutomateBrowsers(config, callback) {
+  var user = config.browserstack.user;
+  var key = config.browserstack.key;
+  var outFile = config.browserstack.update.browserJson;
+
+  var opts = _.extend({
+    auth: user + ':' + key
+  }, config.browserstack.update.endpoint);
+
+  jsonRequestStream(opts)
+    .errors(function (err, push) {
+      push(null, {});
+      callback(err);
+    })
+    .apply(function (browsers) {
+      if (!browsers || !browsers.length) {
+        return callback(null, []);
+      }
+
+      _([ browsers ])
+        .map(function (obj) {
+          return JSON.stringify(obj, null, 2);
+        })
+        .pipe(fs.createWriteStream(outFile))
+        .on('error', callback)
+        .on('finish', function () {
+          debug('Fin');
+          callback(null, browsers);
+        });
+    });
+}
+
+
+function jsonRequestStream(options) {
+  return _(function (push) {
+    var req = https.request(options, function (res) {
+      _(res)
+        .errors(function (err, next) {
+          next(null);
+          push(err);
+        })
+        .reduce1(function (a, b) {
+          return a + b;
+        })
+        .apply(function (body) {
+          try {
+            push(null, JSON.parse(body));
+            push(null, _.nil);
+          } catch (e) {
+            push(e);
+          }
+        });
+    });
+
+    req.on('error', push);
+    req.end();
+  });
 }
