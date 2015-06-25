@@ -45,7 +45,6 @@ config.browserstack = {
     ];
 
     if (caps.device) {
-      delete attrs.browser_version;
       attrs.push('device');
       attrs.push('deviceOrientation');
     } else {
