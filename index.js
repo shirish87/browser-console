@@ -31,8 +31,7 @@ config.client = {
 };
 
 config.browserstack = {
-  // hub: 'http://hub.browserstack.com/wd/hub',
-  hub: 'http://127.0.0.1:4444/wd/hub',
+  hub: 'http://hub.browserstack.com/wd/hub',
   user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_KEY,
 
@@ -90,7 +89,7 @@ config.keepAliveInterval = 30000;
     .argv;
 
   repl.print('… Loading …');
-  
+
   // TODO: loading browsers takes longer than anticipated
   getOrFetchBrowsers(config, function (err, bh) {
     var caps;
