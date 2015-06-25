@@ -234,7 +234,7 @@ function createTunnel(config) {
 
     ngrok.connect(config.port, function (err, url) {
       if (url) {
-        repl.print('… ' + url);
+        // repl.print('… ' + url);
         debug('Tunnel ready');
       }
 
