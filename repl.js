@@ -23,7 +23,7 @@ module.exports.print = function (msg, withPrompt) {
 
 module.exports.showPrompt = function () {
   if (replServer) {
-    if (!isPromptSet) {
+    if (!isPromptSet && replServer.setPrompt) {
       replServer.setPrompt(promptText);
     }
 
@@ -37,7 +37,7 @@ module.exports.start = function start(config) {
   return _(function (push, next) {
 
     replServer = repl.start({
-      prompt: '',
+      prompt: promptText,
       eval: function (cmd, ctx, file, fn) {
         var hasData = (cmd && !!cmd.trim());
         if (!hasData) {
