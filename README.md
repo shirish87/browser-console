@@ -1,15 +1,49 @@
 # browser-console
+Creates a session with a browser of your choice running on the [BrowserStack Automate](http://www.browserstack.com/automate) platform and allows you to run JavaScript code and receive the output in your local shell.
 
-Similar to [browser-repl](https://github.com/Automattic/browser-repl), but uses the [BrowserStack Automate](https://www.browserstack.com/automate) service.
-Uses concepts and code from `browser-repl`.
+Although written from scratch, this tool uses concepts and code from the excellent [browser-repl](https://github.com/Automattic/browser-repl) module.
 
-This is a work-in-progress and is only intended for devs and early testers.
+There are plans to make this module platform agnostic so it could be used with any Selenium-based cloud/internal/local service. Feedback and PR's welcome. :)
 
+**Note**: This is a work-in-progress at the moment and is only intended for devs and early testers.
+
+## Requirements
+This module currently requires you to have a [BrowserStack Automate](http://www.browserstack.com/automate) account. Once created, please set the following environment variables for your shell.
+```
+BROWSERSTACK_USERNAME=<your-username>
+BROWSERSTACK_KEY=<your-access-key>
+```
 
 ## Install
+Use the following command to install this module globally and make the `browser-console` command available in your shell.
+```
+$ npm install -g browser-console
+```
 
-Until it lands in `npm`, clone this repo and:
+## Usage
 ```
-npm install
-node index.js chrome-43 windows-7
+$ browser-console <browser>-<browser-version> <os>-<os-version>
 ```
+Please refer to this [list of supported browsers and OSs](https://www.browserstack.com/list-of-browsers-and-platforms?product=automate).
+
+Example:
+```
+browser-console firefox-35 windows-7
+```
+Once your session is initialized and you receive `Ready`, you may begin typing in any JavaScript code you wish to execute in the remote browser.
+
+```
+$ browser-console firefox-35 windows-7
+… Loading …
+… Starting server …
+… Creating tunnel …
+… Starting session …
+… Waiting for client connection …
+… Ready
+ › typeof window
+'object'
+```
+
+## Known Issues
+* Functions that creates browser dialog boxes such as `alert()` hang the session
+* Usability and messaging could use some improvement
