@@ -7,6 +7,7 @@ var webdriver = require('selenium-webdriver');
 var ngrok = require('ngrok');
 var https = require('https');
 var fs = require('fs');
+var path = require('path');
 var debug = require('diagnostics')('bc:main');
 
 var repl = require('./repl');
@@ -67,7 +68,7 @@ config.browserstack = {
   },
 
   update: {
-    browserJson: 'browsers.json',
+    browserJson: path.join(__dirname, 'browsers.json'),
     endpoint: {
       hostname: 'www.browserstack.com',
       port: '443',
@@ -85,13 +86,24 @@ config.keepAliveInterval = 30000;
 
 (function init(config) {
 
-  var argv = yargs
+  var argParser = yargs
     .usage('Usage: $0 <browser> [device] <os>')
     .demand(2, 'Missing <browser> or <os>.')
+    .example('export BROWSERSTACK_USERNAME=<username>')
+    .example('export BROWSERSTACK_KEY=<access-key>')
     .example('$0 chrome-36 windows-7', 'Opens a console session with Chrome 36 on Windows 7 running remotely on BrowserStack.')
     .help('h')
-    .alias('h', 'help')
-    .argv;
+    .alias('h', 'help');
+
+  var argv = argParser.argv;
+
+  [ 'BROWSERSTACK_USERNAME', 'BROWSERSTACK_KEY' ].forEach(function (k) {
+    if (!process.env[k]) {
+      argParser.showHelp();
+      console.log('Missing required environment variable: %s', k);
+      process.exit(1);
+    }
+  });
 
   repl.print('… Loading …');
 
@@ -355,8 +367,7 @@ function getOrFetchBrowsers(config, callback) {
   fs.stat(browserJsonPath, function (err, stat) {
     // TODO: Get files last-modified time and update periodically
     var browserJsonExists = (stat && stat.isFile());
-
-    var browsers = browserJsonExists ? require('./' + browserJsonPath) : {};
+    var browsers = browserJsonExists ? require(browserJsonPath) : {};
 
     if (!browsers || !browsers.length) {
       debug('Fetching', browserJsonPath);
