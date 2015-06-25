@@ -2,6 +2,7 @@
 
 var _ = require('highland');
 var http = require('http');
+var path = require('path');
 var serveStatic = require('serve-static');
 var finalhandler = require('finalhandler');
 var debug = require('diagnostics')('bc:server');
@@ -16,7 +17,8 @@ module.exports.start = function start(config, replStream, callback) {
   var indexFile = (useCache ? 'cache.html' : 'index.html');
   debug('Using indexFile: %s', indexFile);
 
-  var serve = serveStatic('public', { 'index': [ indexFile ] });
+  var staticRoot = path.join(__dirname, 'public');
+  var serve = serveStatic(staticRoot, { 'index': [ indexFile ] });
 
   var server = http.createServer(function (req, res) {
     serve(req, res, finalhandler(req, res));
