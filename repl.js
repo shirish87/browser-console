@@ -12,14 +12,14 @@ var replServer;
 var isPromptSet = false;
 
 
-module.exports.print = function (msg, withCursor) {
+module.exports.print = function (msg, withPrompt) {
   if (replServer) {
     replServer.clearLine(process.stdout, 0);
   }
 
   console.log(msg || '');
 
-  if (withCursor) {
+  if (withPrompt) {
     this.showPrompt();
   }
 };

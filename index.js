@@ -1,5 +1,7 @@
+#!/usr/bin/env node
 'use strict';
 
+var yargs = require('yargs');
 var _ = require('highland');
 var webdriver = require('selenium-webdriver');
 var ngrok = require('ngrok');
@@ -11,18 +13,9 @@ var repl = require('./repl');
 var server = require('./server');
 var PrimusClient = require('./client');
 
-// TODO: Accept and parse command-line args
-var options = {
-  capabilities: {
-    browser: 'chrome',
-    browserVersion: '36.0',
-    os: 'Windows',
-    osVersion: '7'
-  }
-};
-
 
 var config = {};
+
 config.websocket = {
   engine: 'engine.io'
 };
@@ -38,9 +31,36 @@ config.client = {
 };
 
 config.browserstack = {
-  hub: 'http://hub.browserstack.com/wd/hub',
+  // hub: 'http://hub.browserstack.com/wd/hub',
+  hub: 'http://127.0.0.1:4444/wd/hub',
   user: process.env.BROWSERSTACK_USERNAME,
   key: process.env.BROWSERSTACK_KEY,
+
+  getCapabilities: function (caps) {
+    // TODO: Needs to be as per -
+    // https://www.browserstack.com/automate/capabilities
+    var attrs = [
+      'browser',
+      'os',
+      'os_version'
+    ];
+
+    if (caps.device) {
+      delete attrs.browser_version;
+      attrs.push('device');
+      attrs.push('deviceOrientation');
+    } else {
+      attrs.push('browser_version');
+    }
+
+    return attrs.reduce(function (o, k) {
+      if (caps[k]) {
+        o[k] = caps[k];
+      }
+
+      return o;
+    }, {});
+  },
 
   update: {
     browserJson: 'browsers.json',
@@ -57,21 +77,82 @@ config.port = 8080;
 config.openTimeout = 60000;
 config.keepAliveInterval = 30000;
 
-boot(config, options);
+
+
+(function init(config) {
+
+  var argv = yargs
+    .usage('Usage: $0 <browser> [device] <os>')
+    .demand(2, 'Missing <browser> or <os>.')
+    .example('$0 chrome-36 windows-7', 'Opens a console session with Chrome 36 on Windows 7 running remotely on BrowserStack.')
+    .help('h')
+    .alias('h', 'help')
+    .argv;
+
+  repl.print('… Loading …');
+  
+  // TODO: loading browsers takes longer than anticipated
+  getOrFetchBrowsers(config, function (err, bh) {
+    var caps;
+
+    if (typeof bh === 'object') {
+      debug('Loaded browsers');
+
+      var k = getBrowserHashKey(argv._.map(function (s) {
+        return s.replace(/\-/g, '|');
+      }));
+
+      caps = bh[k];
+      if (caps) {
+        debug('Found requested browser');
+        return boot(config, {
+          id: k,
+          capabilities: caps
+        });
+      }
+    }
+
+    if (argv._ && argv._.length >= 2) {
+      var len = argv._.length;
+      var browserParts = argv._.shift().split('-');
+      var device = (len >= 3) ? argv._.shift() : null;
+      var osParts = argv._.shift().split('-');
+
+      if (device) {
+        // device
+        caps = {
+          'browser': browserParts.shift(),
+          'device': device,
+          'os': osParts.shift(),
+          'os_version': osParts.shift()
+        };
+
+      } else if (len === 2) {
+        // browser
+        caps = {
+          'browser': browserParts.shift(),
+          'browser_version': browserParts.shift(),
+          'os': osParts.shift(),
+          'os_version': osParts.shift()
+        };
+      }
+
+      boot(config, {
+        id: getBrowserId(caps),
+        capabilities: caps
+      });
+    }
+
+    repl.print('Invalid arguments.');
+  });
+
+})(config);
+
 
 
 function boot(config, options) {
-  repl.print('Please wait…');
-
-  var browsers = [];
-  getOrFetchBrowsers(config, function (err, bs) {
-    if (Array.isArray(bs) && bs.length) {
-      browsers = bs;
-    }
-  });
-
   var replStream = repl.start(config);
-  // repl.hideCursor();
+  repl.print('… Starting server …');
 
   server.start(config, replStream, function (err, primus, dataStream) {
     if (err) { throw err; }
@@ -80,7 +161,7 @@ function boot(config, options) {
     var useWd = !!(options && options.capabilities);
     debug('Using Selenium WebDriver: %s', useWd);
 
-    var wd = useWd ? initWebDriver(config, options.capabilities) : null;
+    var wd = useWd && initWebDriver(config.browserstack, options.capabilities);
     var terminate = terminateFn(wd, [ replStream, dataStream ]);
 
     replStream.fork().done(function () {
@@ -112,6 +193,7 @@ function boot(config, options) {
       })
       .apply(function (url, client) {
         debug('Tunnel and client ready');
+        repl.print('… Exporting client …');
 
         client.exportFile(url, function (err) {
           if (err) {
@@ -120,6 +202,7 @@ function boot(config, options) {
           }
 
           if (wd) {
+            repl.print('… Starting session …');
             startWdSession(config, wd, url, terminate);
           }
         });
@@ -130,6 +213,7 @@ function boot(config, options) {
 
 function createTunnel(config) {
   return function (callback) {
+    repl.print('… Creating tunnel …');
     debug('Creating tunnel');
 
     ngrok.connect(config.port, function (err, url) {
@@ -160,35 +244,17 @@ function clientConsolePrint(c) {
 }
 
 
-function initWebDriver(config, caps) {
-  var capabilities;
-
-  // TODO: Needs to be as per -
-  // https://www.browserstack.com/automate/capabilities
-  if (caps.device) {
-    capabilities = {
-      'browser': caps.browser,
-      'device': caps.device,
-      'deviceOrientation': caps.deviceOrientation,
-      'os': caps.os
-    };
-  } else {
-    capabilities = {
-      'browser': caps.browser,
-      'browser_version': caps.browserVersion,
-      'os': caps.os,
-      'os_version': caps.osVersion
-    };
-  }
+function initWebDriver(serviceConfig, caps) {
+  var capabilities = serviceConfig.getCapabilities(caps);
 
   // Selenium requires 'browserName'
   capabilities.browserName = capabilities.browser;
 
-  capabilities['browserstack.user'] = config.browserstack.user;
-  capabilities['browserstack.key'] = config.browserstack.key;
+  capabilities['browserstack.user'] = serviceConfig.user;
+  capabilities['browserstack.key'] = serviceConfig.key;
 
   var wd = new webdriver.Builder()
-    .usingServer(config.browserstack.hub)
+    .usingServer(serviceConfig.hub)
     .withCapabilities(capabilities)
     .build();
 
@@ -201,8 +267,11 @@ function startWdSession(config, wd, url, terminate) {
 
   debug('Opening URL: %s', url);
   wd.get(url);
+  repl.print('… Waiting for web page to load …');
 
   if (config.keepAliveInterval && config.keepAliveInterval > 0) {
+    // repl.print('… Setting up session keep-alive …');
+
     wd.keepAliveHandle = setInterval(function () {
       wd.executeScript('return 1').then(function(res) {
         debug('Keep-Alive: %s', res);
@@ -214,9 +283,10 @@ function startWdSession(config, wd, url, terminate) {
   }
 
   var checkTitle = webdriver.until.titleIs(config.client.pageTitle);
+
   wd.wait(checkTitle, config.openTimeout).then(function () {
     debug('Opened URL: %s', url);
-    repl.print('Ready', true);
+    repl.print('… Ready', true);
   }).then(null, function (err) {
     debug('Failed to open URL', err);
     terminate(1);
@@ -236,6 +306,7 @@ function terminateFn(wd, streams) {
   */
   return function terminate(exitCode) {
     if (!isTerminated) {
+      repl.print('… Terminating session …');
       debug('terminate');
       isTerminated = true;
       exitCode = exitCode || 0;
@@ -279,9 +350,9 @@ function getOrFetchBrowsers(config, callback) {
     // TODO: Get files last-modified time and update periodically
     var browserJsonExists = (stat && stat.isFile());
 
-    var browsers = browserJsonExists ? require('./' + browserJsonPath) : [];
+    var browsers = browserJsonExists ? require('./' + browserJsonPath) : {};
 
-    if (!Array.isArray(browsers) || !browsers.length) {
+    if (!browsers || !browsers.length) {
       debug('Fetching', browserJsonPath);
       return fetchAutomateBrowsers(config, callback);
     }
@@ -308,10 +379,15 @@ function fetchAutomateBrowsers(config, callback) {
     })
     .apply(function (browsers) {
       if (!browsers || !browsers.length) {
-        return callback(null, []);
+        return callback(null, {});
       }
 
-      _([ browsers ])
+      var browserHash = {};
+      browsers.forEach(function (b) {
+        browserHash[getBrowserId(b)] = b;
+      });
+
+      _([ browserHash ])
         .map(function (obj) {
           return JSON.stringify(obj, null, 2);
         })
@@ -319,9 +395,34 @@ function fetchAutomateBrowsers(config, callback) {
         .on('error', callback)
         .on('finish', function () {
           debug('Fin');
-          callback(null, browsers);
+          callback(null, browserHash);
         });
     });
+}
+
+
+function getBrowserId(b) {
+  var sig;
+
+  if (b.device) {
+    sig = [ 'browser', 'device', 'os', 'os_version' ];
+  } else {
+    sig = [ 'browser', 'browser_version', 'os', 'os_version' ];
+  }
+
+  return getBrowserHashKey(sig.map(function (k) { return b[k]; }));
+}
+
+
+function getBrowserHashKey(c) {
+  return (Array.isArray(c) ? c : [])
+    .map(function (b) { return keyString(b); })
+    .reduce(function (a, b) { return a + '|' + b; });
+}
+
+
+function keyString(s) {
+  return s.replace(/\s+/g, '').replace(/\.0$/, '').toLowerCase();
 }
 
 
