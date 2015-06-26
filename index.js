@@ -373,15 +373,15 @@ function getOrFetchBrowsers(config, callback) {
   fs.stat(browserJsonPath, function (err, stat) {
     // TODO: Get files last-modified time and update periodically
     var browserJsonExists = (stat && stat.isFile());
-    var browsers = browserJsonExists ? require(browserJsonPath) : {};
+    var browserHash = browserJsonExists ? require(browserJsonPath) : {};
 
-    if (!browsers || !browsers.length) {
+    if (!browserHash) {
       debug('Fetching', browserJsonPath);
       return fetchAutomateBrowsers(config, callback);
     }
 
     debug('Reusing', browserJsonPath);
-    callback(null, browsers);
+    callback(null, browserHash);
   });
 }
 
