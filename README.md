@@ -5,7 +5,7 @@ Although written from scratch, this tool uses concepts and code from the excelle
 
 There are plans to make this module platform agnostic so it could be used with any Selenium-based cloud/internal/local service. Feedback and PR's welcome. :)
 
-**Note**: This is a work-in-progress at the moment and is only intended for devs and early testers.
+**Note**: This is a work-in-progress at the moment and is only intended for early testers.
 
 ## Requirements
 This module currently requires you to have a [BrowserStack Automate](http://www.browserstack.com/automate) account. Once created, please set the following environment variables for your shell.
@@ -28,12 +28,12 @@ Please refer to this [list of supported browsers and OSs](https://www.browsersta
 
 Example:
 ```
-browser-console firefox-35 windows-7
+$ browser-console firefox-35 windows-7
 ```
 Once your session is initialized and you receive `Ready`, you may begin typing in any JavaScript code you wish to execute in the remote browser.
 
 ```
-$ browser-console firefox-35 windows-7
+$ browser-console chrome-42 windows-7
 … Loading …
 … Starting server …
 … Creating tunnel …
@@ -42,8 +42,23 @@ $ browser-console firefox-35 windows-7
 … Ready
  › typeof window
 'object'
+ › typeof Promise
+'function'
+ › typeof Proxy
+'undefined'
+ › var f = function func() { console.log('i am func'); }
+undefined
+ › f.name
+'func'
+ › let test = 'template'
+SyntaxError: Block-scoped declarations (let, const, function, class) not yet supported outside strict mode
+...
+ › var test = 'template'
+undefined
+ › console.log(`${test} strings`)
+'template strings'
 ```
 
 ## Known Issues
-* Functions that creates browser dialog boxes such as `alert()` hang the session
+* Functions that create browser dialog boxes such as `alert()` hang the session
 * Usability and messaging could use some improvement
